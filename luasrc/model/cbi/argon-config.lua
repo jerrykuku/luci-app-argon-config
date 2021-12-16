@@ -15,15 +15,15 @@ local space_used = space_total - space_free
 local free_byte = space_free * fstat.frsize
 
 local primary, dark_primary, blur_radius, blur_radius_dark, blur_opacity, mode
-if nxfs.access('/etc/config/argon') then
-	primary = uci:get_first('argon', 'global', 'primary')
-	dark_primary = uci:get_first('argon', 'global', 'dark_primary')
-	blur_radius = uci:get_first('argon', 'global', 'blur')
-	blur_radius_dark = uci:get_first('argon', 'global', 'blur_dark')
-	blur_opacity = uci:get_first('argon', 'global', 'transparency')
-	blur_opacity_dark = uci:get_first('argon', 'global', 'transparency_dark')
-	mode = uci:get_first('argon', 'global', 'mode')
-	bing_background = uci:get_first('argon', 'global', 'bing_background')
+if nxfs.access('/etc/config/argon-config') then
+	primary = uci:get_first('argon-config', 'global', 'primary')
+	dark_primary = uci:get_first('argon-config', 'global', 'dark_primary')
+	blur_radius = uci:get_first('argon-config', 'global', 'blur')
+	blur_radius_dark = uci:get_first('argon-config', 'global', 'blur_dark')
+	blur_opacity = uci:get_first('argon-config', 'global', 'transparency')
+	blur_opacity_dark = uci:get_first('argon-config', 'global', 'transparency_dark')
+	mode = uci:get_first('argon-config', 'global', 'mode')
+	bing_background = uci:get_first('argon-config', 'global', 'bing_background')
 end
 
 function glob(...)
@@ -121,9 +121,9 @@ function br.handle(self, state, data)
     if (state == FORM_VALID and data.blur ~= nil and data.blur_dark ~= nil and data.transparency ~= nil and data.transparency_dark ~= nil and data.mode ~= nil) then
         nxfs.writefile('/tmp/aaa', data)
         for key, value in pairs(data) do
-            uci:set('argon','@global[0]',key,value)
+            uci:set('argon-config','@global[0]',key,value)
         end 
-        uci:commit('argon')
+        uci:commit('argon-config')
     end
     return true
 end
