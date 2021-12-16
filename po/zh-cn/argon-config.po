@@ -56,9 +56,6 @@ msgstr "十六进制颜色值 ( 预设为：#483d8b )"
 msgid "[Light mode] Transparency"
 msgstr "[亮色模式] 透明度"
 
-msgid "[Light mode] Transparency"
-msgstr "[亮色模式] 透明度"
-
 msgid "[Dark mode] Transparency"
 msgstr "[暗色模式] 透明度"
 
