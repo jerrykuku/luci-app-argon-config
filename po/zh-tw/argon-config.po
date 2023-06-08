@@ -17,7 +17,8 @@ msgstr "0 全透明 - 1 不透明（建議：黑色半透明 0.5）"
 
 #: applications/luci-app-argon-config/luasrc/model/cbi/argon-config.lua:79
 msgid ""
-"0 transparent - 1 opaque ; ( Suggest: transparent: 0 or translucent preset: 0.5 )"
+"0 transparent - 1 opaque ; ( Suggest: transparent: 0 or translucent preset: "
+"0.5 )"
 msgstr "0 全透明 - 1 不透明（建議：全透明 0，或半透明 0.5）"
 
 #: applications/luci-app-argon-config/luasrc/model/cbi/argon-config.lua:92
@@ -79,15 +80,16 @@ msgstr "為 luci-app-argon-config 授予 UCI 權限"
 
 #: applications/luci-app-argon-config/luasrc/model/cbi/argon-config.lua:53
 msgid ""
-"Here you can set the blur and transparency of the login page of argon theme, and "
-"manage the background pictures and videos.[Chrome is recommended]"
+"Here you can set the blur and transparency of the login page of argon theme, "
+"and manage the background pictures and videos.[Chrome is recommended]"
 msgstr ""
 "您可以在此設定登入畫面的模糊度、透明度、以及管理背景圖片與影片（推薦使用 "
 "Chrome）。"
 
 #: applications/luci-app-argon-config/luasrc/model/cbi/argon-config.lua:87
 #: applications/luci-app-argon-config/luasrc/model/cbi/argon-config.lua:105
-msgid "Larger value will more blurred ; ( Suggest: clear: 1 or blur preset: 10 )"
+msgid ""
+"Larger value will more blurred ; ( Suggest: clear: 1 or blur preset: 10 )"
 msgstr "數值越大越模糊（建議：清晰 1，或模糊程度 10）"
 
 #: applications/luci-app-argon-config/luasrc/model/cbi/argon-config.lua:201
@@ -136,9 +138,11 @@ msgstr "您可以在此選擇佈景主題的顏色模式"
 
 #: applications/luci-app-argon-config/luasrc/model/cbi/argon-config.lua:124
 msgid ""
-"You can upload files such as jpg,png,gif,mp4,webm files, To change the login page "
-"background."
-msgstr "您可以上傳諸如 jpg、png、gif、mp4、webm 等類型的檔案來更換登入畫面的背景。"
+"You can upload files such as jpg,png,gif,webp,mp4,webm files, To change the "
+"login page background."
+msgstr ""
+"您可以上傳諸如 jpg、png、gif、webp、mp4、webm 等類型的檔案來更換登入畫面的背"
+"景。"
 
 #: applications/luci-app-argon-config/luasrc/model/cbi/argon-config.lua:105
 msgid "[Dark mode] Frosted Glass Radius"
