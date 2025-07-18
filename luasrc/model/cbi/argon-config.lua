@@ -112,9 +112,10 @@ o.inputstyle = 'reload'
 
 function br.handle(self, state, data)
     if (state == FORM_VALID and data.blur ~= nil and data.blur_dark ~= nil and data.transparency ~= nil and data.transparency_dark ~= nil and data.mode ~= nil) then
-        nxfs.writefile('/tmp/aaa', data)
         for key, value in pairs(data) do
-            uci:set('argon','@global[0]',key,value)
+            if key ~= 'save' then
+                uci:set('argon','@global[0]',key,value)
+            end
         end 
         uci:commit('argon')
     end
