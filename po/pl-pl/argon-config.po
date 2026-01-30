@@ -9,7 +9,7 @@ msgstr "0 przezroczysty - 1 nieprzezroczysty (sugerowane: czarny półprzezroczy
 msgid ""
 "0 transparent - 1 opaque (suggest: transparent: 0 or translucent preset: "
 "0.5)."
-msgstr "0 przezroczysty - 1 nieprzezroczysty (sugerowane: przezroczysty: 0 lub półprzezroczysty preset:"
+msgstr "0 przezroczysty - 1 nieprzezroczysty (sugerowane: przezroczysty: 0 lub półprzezroczysty preset: "
 "0.5)."
 
 #: applications/luci-app-argon-config/htdocs/luci-static/resources/view/argon-config.js:91
@@ -59,7 +59,7 @@ msgstr "Spodziewano się: %s"
 
 #: applications/luci-app-argon-config/htdocs/luci-static/resources/view/argon-config.js:139
 msgid "Failed to upload file: %s."
-msgstr "Nie udało się przesłać plik: %s."
+msgstr "Nie udało się przesłać pliku: %s."
 
 #: applications/luci-app-argon-config/htdocs/luci-static/resources/view/argon-config.js:152
 msgid "Filename"
