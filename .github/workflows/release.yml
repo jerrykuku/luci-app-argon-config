@@ -4,36 +4,73 @@ on:
   push:
     tags:
       - 'release-*'
+  workflow_dispatch:
 
 jobs:
   build:
-    name: Build the IPK
+    name: Build Packages
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - name: '23.05'
+            ext: 'ipk'
+            version_path: 'releases/23.05.5'
+          - name: 'snapshot'
+            ext: 'apk'
+            version_path: 'snapshots'
+    container:
+      image: openwrt/sdk:latest
+      options: --user root
+    env:
+      VERSION_PATH: ${{ matrix.version_path }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download SDK
+        working-directory: /builder
+        run: |
+          /builder/setup.sh ${{ env.VERSION_PATH }}
+
+      - name: Build package (${{ matrix.name }})
+        run: |
+          ./.github/workflows/build.sh
+
+      - name: Upload package artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: packages-${{ matrix.name }}
+          path: |
+            /builder/bin/packages/x86_64/base/*argon-config*.${{ matrix.ext }}
+
+      - name: Upload logs
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs-${{ matrix.name }}
+          path: /builder/bin/logs.tar.xz
+
+  release:
+    name: Create GitHub Release
+    needs: build
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout
-      uses: actions/checkout@master
-    - name: Prepare
-      run: |
-        mkdir -p bin/luci-app-argon-config
-        cp -rf ./luasrc ./po ./root ./Makefile ./bin/luci-app-argon-config
-    - name: Docker Build
-      run: |
-        docker pull openwrt/sdk
-        docker run --rm -u root -v "$(pwd)"/bin/:/home/build/openwrt/bin -v ${{ github.workspace }}/.github/workflows:/home/build/workflows openwrt/sdk /bin/sh /home/build/workflows/build.sh
-    - name: Release
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        set -x
-        assets=()
-        for asset in ./bin/packages/x86_64/base/*argon-config*.ipk; do
-          assets+=("-a" "$asset")
-        done
-        tag_name=$(basename ${{github.ref}})
-        hub release create -p "${assets[@]}" -m "$tag_name" "$tag_name"
-    - name: Upload Log
-      if: ${{ always() }}
-      uses: actions/upload-artifact@v3
-      with:
-        name: buildlog
-        path: bin/logs.tar.xz
+      - name: Download 23.05 artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: packages-23.05
+
+      - name: Download snapshot artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: packages-snapshot
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          files: |
+            *.ipk
+            *.apk
