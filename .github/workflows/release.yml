@@ -66,9 +66,9 @@ jobs:
       run: |
         tag_name=${GITHUB_REF#refs/tags/}
         gh release create "$tag_name" bin/*.ipk --title "$tag_name"
-
+    
     - name: Upload Log
-      if: ${{ always() }}
+      if: ${{ always() && hashFiles('openwrt/logs/**') != '' }}
       uses: actions/upload-artifact@v4
       with:
         name: buildlog
