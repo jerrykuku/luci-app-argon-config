@@ -34,7 +34,7 @@ jobs:
         hub release create -p "${assets[@]}" -m "$tag_name" "$tag_name"
     - name: Upload Log
       if: ${{ always() }}
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: buildlog
         path: bin/logs.tar.xz
