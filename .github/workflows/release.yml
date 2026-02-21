@@ -1,39 +1,66 @@
-name: Release
+name: Build
 
 on:
   push:
-    tags:
-      - 'release-*'
+  workflow_dispatch:
 
 jobs:
   build:
-    name: Build the IPK
     runs-on: ubuntu-latest
+
     steps:
-    - name: Checkout
-      uses: actions/checkout@master
-    - name: Prepare
+    - uses: actions/checkout@v4
+
+    - name: Install deps
       run: |
-        mkdir -p bin/luci-app-argon-config
-        cp -rf ./luasrc ./po ./root ./Makefile ./bin/luci-app-argon-config
-    - name: Docker Build
+        sudo apt update
+        sudo apt install -y build-essential clang flex bison g++ gawk gcc-multilib \
+        gettext git libncurses-dev libssl-dev rsync unzip wget zlib1g-dev file \
+        python3 zstd curl
+
+    - name: Download SDK
       run: |
-        docker pull openwrt/sdk
-        docker run --rm -u root -v "$(pwd)"/bin/:/home/build/openwrt/bin -v ${{ github.workspace }}/.github/workflows:/home/build/workflows openwrt/sdk /bin/sh /home/build/workflows/build.sh
-    - name: Release
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SDK_URL=$(curl -s https://downloads.openwrt.org/releases/24.10.0/targets/x86/64/ | \
+          grep -o 'openwrt-sdk-[^"]*Linux-x86_64.tar.zst' | head -n1)
+        wget https://downloads.openwrt.org/releases/24.10.0/targets/x86/64/$SDK_URL
+        tar --use-compress-program=unzstd -xf $SDK_URL
+        SDK_DIR=$(find . -maxdepth 1 -type d -name "openwrt-sdk-*")
+        mv "$SDK_DIR" openwrt
+
+    - name: Add package
       run: |
-        set -x
-        assets=()
-        for asset in ./bin/packages/x86_64/base/*argon-config*.ipk; do
-          assets+=("-a" "$asset")
+        mkdir -p openwrt/package/luci-app-argon-config
+        cp -r htdocs po root Makefile openwrt/package/luci-app-argon-config/
+
+    - name: Feeds
+      working-directory: openwrt
+      run: |
+        git config --global http.postBuffer 524288000
+        git config --global http.lowSpeedLimit 0
+        git config --global http.lowSpeedTime 999999
+        for i in 1 2 3; do
+          ./scripts/feeds update -a && ./scripts/feeds install -a && break
+          rm -rf feeds/luci
+          sleep 5
         done
-        tag_name=$(basename ${{github.ref}})
-        hub release create -p "${assets[@]}" -m "$tag_name" "$tag_name"
-    - name: Upload Log
+
+    - name: Build
+      working-directory: openwrt
+      run: |
+        make defconfig
+        make package/luci-app-argon-config/compile V=s -j$(nproc)
+
+    - name: Collect
+      run: |
+        mkdir -p bin
+        cp openwrt/bin/packages/*/*/luci-app-argon-config*.ipk bin/ || true
+
+    - name: Upload Artifacts
       if: ${{ always() }}
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
-        name: buildlog
-        path: bin/logs.tar.xz
+        name: openwrt-ipk
+        path: |
+          bin/*.ipk
+          openwrt/bin/packages/*/*/*.ipk
+        compression-level: 0
