@@ -1,9 +1,7 @@
-name: Release
+name: Build
 
 on:
   push:
-    tags:
-      - 'release-*'
   workflow_dispatch:
 
 jobs:
@@ -18,16 +16,14 @@ jobs:
         sudo apt update
         sudo apt install -y build-essential clang flex bison g++ gawk gcc-multilib \
         gettext git libncurses-dev libssl-dev rsync unzip wget zlib1g-dev file \
-        python3 zstd curl gh
+        python3 zstd curl
 
     - name: Download SDK
       run: |
         SDK_URL=$(curl -s https://downloads.openwrt.org/releases/24.10.0/targets/x86/64/ | \
           grep -o 'openwrt-sdk-[^"]*Linux-x86_64.tar.zst' | head -n1)
-
         wget https://downloads.openwrt.org/releases/24.10.0/targets/x86/64/$SDK_URL
         tar --use-compress-program=unzstd -xf $SDK_URL
-
         SDK_DIR=$(find . -maxdepth 1 -type d -name "openwrt-sdk-*")
         mv "$SDK_DIR" openwrt
 
@@ -35,13 +31,13 @@ jobs:
       run: |
         mkdir -p openwrt/package/luci-app-argon-config
         cp -r htdocs po root Makefile openwrt/package/luci-app-argon-config/
+
     - name: Feeds
       working-directory: openwrt
       run: |
         git config --global http.postBuffer 524288000
         git config --global http.lowSpeedLimit 0
         git config --global http.lowSpeedTime 999999
-
         for i in 1 2 3; do
           ./scripts/feeds update -a && ./scripts/feeds install -a && break
           rm -rf feeds/luci
@@ -57,19 +53,13 @@ jobs:
     - name: Collect
       run: |
         mkdir -p bin
-        cp openwrt/bin/packages/*/*/luci-app-argon-config*.ipk bin/
+        cp openwrt/bin/packages/*/*/luci-app-argon-config*.ipk bin/ || true
 
-    - name: Release
-      if: startsWith(github.ref, 'refs/tags/')
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        tag_name=${GITHUB_REF#refs/tags/}
-        gh release create "$tag_name" bin/*.ipk --title "$tag_name"
-    
-    - name: Upload Log
-      if: ${{ always() && hashFiles('openwrt/logs/**') != '' }}
+    - name: Upload Artifacts
+      if: ${{ always() }}
       uses: actions/upload-artifact@v4
       with:
-        name: buildlog
-        path: openwrt/logs
+        name: openwrt-build-artifacts
+        path: |
+          **
+        if-no-files-found: ignore
