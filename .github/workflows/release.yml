@@ -59,7 +59,8 @@ jobs:
       if: ${{ always() }}
       uses: actions/upload-artifact@v4
       with:
-        name: openwrt-build-artifacts
+        name: openwrt-ipk
         path: |
-          **
-        if-no-files-found: ignore
+          bin/*.ipk
+          openwrt/bin/packages/*/*/*.ipk
+        compression-level: 0
