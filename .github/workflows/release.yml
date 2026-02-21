@@ -60,10 +60,11 @@ jobs:
         cp openwrt/bin/packages/*/*/luci-app-argon-config*.ipk bin/
 
     - name: Release
+      if: startsWith(github.ref, 'refs/tags/')
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        tag_name=$(basename ${{ github.ref }})
+        tag_name=${GITHUB_REF#refs/tags/}
         gh release create "$tag_name" bin/*.ipk --title "$tag_name"
 
     - name: Upload Log
