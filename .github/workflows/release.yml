@@ -16,7 +16,7 @@ jobs:
     - name: Prepare
       run: |
         mkdir -p bin/luci-app-argon-config
-        cp -rf ./luasrc ./po ./root ./Makefile ./bin/luci-app-argon-config
+        cp -rf ./htdocs ./po ./root ./Makefile ./bin/luci-app-argon-config
     - name: Docker Build
       run: |
         docker pull openwrt/sdk
