@@ -35,12 +35,18 @@ jobs:
       run: |
         mkdir -p openwrt/package/luci-app-argon-config
         cp -r htdocs po root Makefile openwrt/package/luci-app-argon-config/
-
     - name: Feeds
       working-directory: openwrt
       run: |
-        ./scripts/feeds update -a
-        ./scripts/feeds install -a
+        git config --global http.postBuffer 524288000
+        git config --global http.lowSpeedLimit 0
+        git config --global http.lowSpeedTime 999999
+
+        for i in 1 2 3; do
+          ./scripts/feeds update -a && ./scripts/feeds install -a && break
+          rm -rf feeds/luci
+          sleep 5
+        done
 
     - name: Build
       working-directory: openwrt
