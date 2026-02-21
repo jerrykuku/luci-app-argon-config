@@ -21,10 +21,14 @@ jobs:
 
     - name: Download SDK
       run: |
-        wget https://downloads.openwrt.org/releases/24.10.0/targets/x86/64/openwrt-sdk-24.10.0-x86-64_gcc-13.3.0_musl.Linux-x86_64.tar.xz
-        tar xf openwrt-sdk-24.10.0-x86-64_gcc-13.3.0_musl.Linux-x86_64.tar.xz
-        SDK_DIR=$(find . -maxdepth 1 -type d -name "openwrt-sdk-*")
-        mv "$SDK_DIR" openwrt
+        SDK_URL=$(curl -s https://downloads.openwrt.org/releases/24.10.0/targets/x86/64/ | \
+          grep -o 'openwrt-sdk-[^"]*Linux-x86_64.tar.zst' | head -n1)
+
+    wget https://downloads.openwrt.org/releases/24.10.0/targets/x86/64/$SDK_URL
+    tar --use-compress-program=unzstd -xf $SDK_URL
+
+    SDK_DIR=$(find . -maxdepth 1 -type d -name "openwrt-sdk-*")
+    mv "$SDK_DIR" openwrt
 
     - name: Add package
       run: |
