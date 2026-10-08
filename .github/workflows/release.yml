@@ -5,36 +5,78 @@ on:
     tags:
       - 'release-*'
 
+permissions:
+  contents: read
+
 jobs:
   build:
-    name: Build the APK
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - version: '24.10.5'
+            format: ipk
+            image: ghcr.io/openwrt/sdk:x86-64-24.10.5
+          - version: '25.12.5'
+            format: apk
+            image: ghcr.io/openwrt/sdk:x86-64-25.12.5
+    name: OpenWrt ${{ matrix.version }} (${{ matrix.format }})
     steps:
-    - name: Checkout
-      uses: actions/checkout@master
-    - name: Prepare
-      run: |
-        mkdir -p bin/luci-app-argon-config
-        cp -rf ./htdocs ./po ./root ./Makefile ./bin/luci-app-argon-config
-        echo "DIR=$(pwd)/bin/luci-app-argon-config"
-    - name: Docker Build
-      run: |
-        docker pull openwrt/sdk
-        docker run --rm -u root -v ${{ github.workspace }}/bin/:/builder/bin -v ${{ github.workspace }}/.github/workflows:/builder/workflows openwrt/sdk /bin/sh /builder/workflows/build.sh
-    - name: Release
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        set -x
-        assets=()
-        for asset in ./bin/packages/x86_64/base/*argon-config*.apk; do
-          assets+=("$asset")
-        done
-        tag_name=${GITHUB_REF#refs/tags/}
-        gh release create "$tag_name" "${assets[@]}" --title "$tag_name" --notes "Release $tag_name"
-    - name: Upload Log
-      if: ${{ always() }}
-      uses: actions/upload-artifact@v4
-      with:
-        name: buildlog
-        path: bin/logs.tar.xz
+      - uses: actions/checkout@v4
+      - name: Regression tests
+        run: |
+          node --test tests/test-view.js
+          python3 -m unittest discover -s tests -v
+      - name: Checkout theme dependency
+        uses: actions/checkout@v4
+        with:
+          repository: jerrykuku/luci-theme-argon
+          ref: 23c3e525578374d6b20f5e7b93d27874cd01a252
+          path: bin/luci-theme-argon
+      - name: Prepare
+        run: |
+          mkdir -p bin/luci-app-argon-config
+          cp -r htdocs po root Makefile bin/luci-app-argon-config/
+      - name: Docker Build
+        env:
+          SDK_IMAGE: ${{ matrix.image }}
+        run: |
+          docker pull "$SDK_IMAGE"
+          docker run --rm -u root \
+            -v "$GITHUB_WORKSPACE/bin:/builder/bin" \
+            -v "$GITHUB_WORKSPACE/.github/workflows:/builder/workflows:ro" \
+            "$SDK_IMAGE" /bin/sh /builder/workflows/build.sh
+      - name: Upload packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: argon-config-${{ matrix.version }}-${{ matrix.format }}
+          path: bin/packages/*/*/*argon-config*.${{ matrix.format }}
+          if-no-files-found: error
+      - name: Upload Log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: buildlog-${{ matrix.version }}
+          path: bin/logs.tar.xz
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: argon-config-*
+          merge-multiple: true
+          path: artifacts
+      - name: Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          mapfile -t assets < <(find artifacts -type f \( -name '*.ipk' -o -name '*.apk' \))
+          test "${#assets[@]}" -gt 0
+          gh release create "$GITHUB_REF_NAME" "${assets[@]}" \
+            --title "$GITHUB_REF_NAME" --notes "Release $GITHUB_REF_NAME"
