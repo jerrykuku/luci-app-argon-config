@@ -18,7 +18,10 @@ if [ ! -d ./scripts ]; then
 fi
 
 sed -i 's/git\.openwrt\.org\/project\/luci/github\.com\/openwrt\/luci/g' ./feeds.conf.default
-./scripts/feeds update packages luci
+# The SDK keeps core dependencies (OpenSSL, zlib, jsonfilter) in the base feed.
+# Index it before installing packages so their dependencies can be resolved.
+./scripts/feeds update base packages luci
+./scripts/feeds install -a -p base
 ./scripts/feeds install -a -p packages
 ./scripts/feeds install -a -p luci
 mv ./bin/luci-app-argon-config ./package/

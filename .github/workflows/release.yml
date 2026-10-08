@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
@@ -23,13 +23,13 @@ jobs:
             image: ghcr.io/openwrt/sdk:x86-64-25.12.5
     name: OpenWrt ${{ matrix.version }} (${{ matrix.format }})
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Regression tests
         run: |
           node --test tests/test-view.js
           python3 -m unittest discover -s tests -v
       - name: Checkout theme dependency
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: jerrykuku/luci-theme-argon
           ref: 23c3e525578374d6b20f5e7b93d27874cd01a252
@@ -48,25 +48,25 @@ jobs:
             -v "$GITHUB_WORKSPACE/.github/workflows:/builder/workflows:ro" \
             "$SDK_IMAGE" /bin/sh /builder/workflows/build.sh
       - name: Upload packages
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: argon-config-${{ matrix.version }}-${{ matrix.format }}
           path: bin/packages/*/*/*argon-config*.${{ matrix.format }}
           if-no-files-found: error
       - name: Upload Log
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: buildlog-${{ matrix.version }}
           path: bin/logs.tar.xz
 
   publish:
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: write
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           pattern: argon-config-*
           merge-multiple: true

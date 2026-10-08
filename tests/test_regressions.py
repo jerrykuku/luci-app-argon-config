@@ -124,13 +124,28 @@ class BuildTests(unittest.TestCase):
             (self.builder / name).mkdir(parents=True)
         (self.builder / 'feeds.conf.default').write_text('fixture feeds\n')
         (self.builder / 'logs/build.log').write_text('build log')
-        executable(self.builder / 'scripts/feeds', 'exit "${FIXTURE_FEED_STATUS:-0}"\n')
+        executable(self.builder / 'scripts/feeds', '''[ "${FIXTURE_FEED_STATUS:-0}" -eq 0 ] || exit "$FIXTURE_FEED_STATUS"
+if [ "$1" = update ]; then
+    shift
+    for feed in "$@"; do
+        mkdir -p "feeds/$feed"
+    done
+elif [ "$1" = install ] && [ -d feeds/base ]; then
+    # Model a core dependency resolved from the SDK's base feed.
+    mkdir -p package/feeds/base/openssl
+    printf 'fixture dependency' > package/feeds/base/openssl/Makefile
+fi
+''')
         fakebin = self.root / 'fakebin'
         fakebin.mkdir()
         executable(fakebin / 'sed', 'exit 0\n')  # Avoid BSD/GNU sed differences.
         executable(fakebin / 'nproc', 'echo 1\n')
         executable(fakebin / 'make', '''[ "$1" = defconfig ] && exit 0
 [ "${FIXTURE_COMPILE_STATUS:-0}" -eq 0 ] || exit "$FIXTURE_COMPILE_STATUS"
+if [ "${FIXTURE_REQUIRE_BASE:-0}" -eq 1 ] && [ ! -f package/feeds/base/openssl/Makefile ]; then
+    echo 'fatal error: openssl/des.h: No such file or directory' >&2
+    exit 86
+fi
 mkdir -p bin/packages/x86_64/base
 if [ "${FIXTURE_MISSING_PACKAGE:-0}" -eq 0 ]; then
     printf 'package' > "bin/packages/x86_64/base/luci-app-argon-config.${FIXTURE_FORMAT:-ipk}"
@@ -148,6 +163,10 @@ fi
         result = self.run_build(FIXTURE_COMPILE_STATUS='42')
         self.assertEqual(result.returncode, 42, result.stderr)
         self.assertTrue((self.builder / 'bin/logs.tar.xz').exists())
+
+    def test_core_dependencies_are_available_for_compilation(self):
+        result = self.run_build(FIXTURE_REQUIRE_BASE='1')
+        self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_feed_failure_stops_build(self):
         result = self.run_build(FIXTURE_FEED_STATUS='39')
