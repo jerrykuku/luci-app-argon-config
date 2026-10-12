@@ -24,6 +24,13 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
+      - name: Use BusyBox hexdump for RPC tests
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y busybox
+          mkdir -p "$RUNNER_TEMP/argon-test-bin"
+          ln -s "$(command -v busybox)" "$RUNNER_TEMP/argon-test-bin/hexdump"
+          echo "$RUNNER_TEMP/argon-test-bin" >> "$GITHUB_PATH"
       - name: Regression tests
         run: |
           node --test tests/test-*.js
