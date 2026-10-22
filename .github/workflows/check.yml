@@ -5,9 +5,6 @@ on:
     branches:
       - master
     paths:
-      - 'htdocs/**'
-      - 'root/**'
-      - 'po/**'
       - 'Makefile'
       - '.github/workflows/**'
       - 'tests/**'
@@ -24,16 +21,8 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
-      - name: Use BusyBox hexdump for RPC tests
-        run: |
-          sudo apt-get update
-          sudo apt-get install --no-install-recommends -y busybox
-          mkdir -p "$RUNNER_TEMP/argon-test-bin"
-          ln -s "$(command -v busybox)" "$RUNNER_TEMP/argon-test-bin/hexdump"
-          echo "$RUNNER_TEMP/argon-test-bin" >> "$GITHUB_PATH"
       - name: Regression tests
         run: |
-          node --test tests/test-*.js
           python3 -m unittest discover -s tests -v
 
   build:
@@ -56,12 +45,12 @@ jobs:
         uses: actions/checkout@v7
         with:
           repository: jerrykuku/luci-theme-argon
-          ref: 23c3e525578374d6b20f5e7b93d27874cd01a252
+          ref: 2565c3ca7c06253f68a2ea44d9ea00839ced1484
           path: bin/luci-theme-argon
       - name: Prepare
         run: |
           mkdir -p bin/luci-app-argon-config
-          cp -r htdocs po root Makefile bin/luci-app-argon-config/
+          cp Makefile bin/luci-app-argon-config/
       - name: Docker Build
         env:
           SDK_IMAGE: ${{ matrix.image }}

@@ -3,3 +3,7 @@
 /progress.md
 /progess.md
 /findings.md
+
+# Python regression-test caches
+__pycache__/
+*.py[cod]

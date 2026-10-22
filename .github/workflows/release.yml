@@ -26,18 +26,17 @@ jobs:
       - uses: actions/checkout@v7
       - name: Regression tests
         run: |
-          node --test tests/test-view.js
           python3 -m unittest discover -s tests -v
       - name: Checkout theme dependency
         uses: actions/checkout@v7
         with:
           repository: jerrykuku/luci-theme-argon
-          ref: 23c3e525578374d6b20f5e7b93d27874cd01a252
+          ref: 2565c3ca7c06253f68a2ea44d9ea00839ced1484
           path: bin/luci-theme-argon
       - name: Prepare
         run: |
           mkdir -p bin/luci-app-argon-config
-          cp -r htdocs po root Makefile bin/luci-app-argon-config/
+          cp Makefile bin/luci-app-argon-config/
       - name: Docker Build
         env:
           SDK_IMAGE: ${{ matrix.image }}

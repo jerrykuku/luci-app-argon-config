@@ -26,6 +26,8 @@ sed -i 's/git\.openwrt\.org\/project\/luci/github\.com\/openwrt\/luci/g' ./feeds
 ./scripts/feeds install -a -p luci
 mv ./bin/luci-app-argon-config ./package/
 mv ./bin/luci-theme-argon ./package/
+# This checkout supplies the compatibility package; avoid duplicate recipes.
+rm -rf ./package/luci-theme-argon/compat
 
 cat >> .config <<'CONFIG'
 CONFIG_PACKAGE_luci-theme-argon=m
@@ -49,6 +51,7 @@ CONFIG_PACKAGE_luci-i18n-argon-config-zh-tw=m
 CONFIG
 
 make defconfig
+make package/luci-theme-argon/compile V=s -j$(nproc) BUILD_LOG=1
 make package/luci-app-argon-config/compile V=s -j$(nproc) BUILD_LOG=1
 
 package_file="$(find bin/packages -type f \( -name 'luci-app-argon-config*.ipk' -o -name 'luci-app-argon-config*.apk' \) -print -quit)"
